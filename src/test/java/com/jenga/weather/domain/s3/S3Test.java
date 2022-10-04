@@ -21,7 +21,7 @@ public class S3Test {
         try (S3Client s3 = S3Client.builder()
                 .region(region)
                 .credentialsProvider(ProfileCredentialsProvider.create())
-                .build();) {
+                .build()) {
             ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
             ListBucketsResponse listBucketsResponse = s3.listBuckets(listBucketsRequest);
 

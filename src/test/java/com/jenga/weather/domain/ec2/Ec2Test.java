@@ -21,7 +21,7 @@ public class Ec2Test {
         try (Ec2Client ec2 = Ec2Client.builder()
                 .region(region)
                 .credentialsProvider(ProfileCredentialsProvider.create())
-                .build();) {
+                .build()) {
             do {
                 DescribeInstancesRequest request = DescribeInstancesRequest.builder().maxResults(6).nextToken(nextToken).build();
                 DescribeInstancesResponse response = ec2.describeInstances(request);
