@@ -21,7 +21,8 @@ public class VpcTest {
             DescribeVpcsResponse describeVpcsResponse = ec2.describeVpcs();
             describeVpcsResponse.vpcs().forEach(vpc -> {
                 log.info("VPC ID : " + vpc.vpcId());
-                log.info("VPC ID's VPC ID : " + vpc.vpcId());
+                if (!vpc.tags().isEmpty())
+                    log.info("VPC NAME : " + vpc.tags().get(0).value());
             });
         } catch (Ec2Exception e) {
             e.printStackTrace();
