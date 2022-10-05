@@ -22,7 +22,6 @@ public class SubnetTest {
             describeSubnetsResponse.subnets().forEach(v -> {
                 log.info("Subnet ID : " + v.subnetId());
                 log.info("Subnet's VPC ID : " + v.vpcId());
-                log.info("Subnet's Subnet ID : " + v.subnetId());
             });
         } catch (Ec2Exception e) {
             e.printStackTrace();
