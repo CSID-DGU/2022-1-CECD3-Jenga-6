@@ -7,6 +7,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.elasticloadbalancing.model.LoadBalancerNotFoundException;
 import software.amazon.awssdk.services.elasticloadbalancingv2.ElasticLoadBalancingV2Client;
 import software.amazon.awssdk.services.elasticloadbalancingv2.model.DescribeLoadBalancersResponse;
+import software.amazon.awssdk.services.elasticloadbalancingv2.model.ElasticLoadBalancingV2Exception;
 import software.amazon.awssdk.services.elasticloadbalancingv2.model.LoadBalancer;
 
 import java.util.List;
@@ -24,6 +25,9 @@ public class ElbTest {
                 .build()) {
 
             describeElbInstances(elb);
+        } catch (ElasticLoadBalancingV2Exception e) {
+            System.err.println(e.awsErrorDetails().errorCode());
+            System.exit(1);
         }
     }
 

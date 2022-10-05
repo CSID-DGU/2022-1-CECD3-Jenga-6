@@ -24,6 +24,9 @@ public class RdsTest {
                 .build()) {
 
             describeInstances(rdsClient);
+        } catch (RdsException e) {
+            System.err.println(e.awsErrorDetails().errorCode());
+            System.exit(1);
         }
     }
 
