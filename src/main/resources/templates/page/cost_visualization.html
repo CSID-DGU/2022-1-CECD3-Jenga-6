@@ -1,0 +1,41 @@
+<html layout:decorate="~{global/layout}">
+
+<div layout:fragment="content" style="height: 820px;" class="container my-5">
+    <div class="row" style="height: 40%">
+        <div class="col bg-success">
+            <div class="card my-1 mx-1" style="height: 90%">
+                <div class="card-body">
+                    <h5 class="card-title">Clouds</h5>
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <td class="font-weight-bold">CLOUD NAME</td>
+                            <td class="font-weight-bold">ID</td>
+                            <td class="font-weight-bold">COSTS</td>
+                            <td class="font-weight-bold">UTILIZATION</td>
+                        </tr>
+                        </thead>
+                        <tbody th:each="vpcCost : ${vpcCostList}">
+                            <tr>
+                                <td th:text="${vpcCost.name}"></td>
+                                <td th:text="${vpcCost.vpcId}"></td>
+                                <td th:text="${#numbers.formatInteger(vpcCost.cost, 0, 'COMMA')}"></td>
+                                <td th:text="|${vpcCost.utilization}%|"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row" style="height: 60%">
+        <div class="col w-100 bg-light">
+            <div class="card my-1 mx-1" style="height: 100%">
+                <div class="card-body">
+                    <h5 class="card-title">d3-image</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</html>
