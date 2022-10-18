@@ -1,0 +1,45 @@
+<html layout:decorate="~{global/layout}">
+
+<div layout:fragment="content" style="height: 820px;" class="container my-5">
+    <div class="row" style="height: 40%">
+        <div class="col w-50 bg-success">
+            <div class="card my-1 mx-1" style="height: 90%">
+                <div class="card-body">
+                    <h5 class="card-title">Clouds</h5>
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th scope="col">CLOUD NAME</th>
+                            <th scope="col">ID</th>
+                        </tr>
+                        </thead>
+                        <tbody th:each="vpc : ${vpcList}">
+                            <tr>
+                                <td th:text="${vpc.name}"></td>
+                                <td th:text="${vpc.vpcId}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col w-50 bg-danger">
+            <div class="card my-1 mx-1" style="height: 90%">
+                <div class="card-body">
+                    <h5 class="card-title">Details</h5>
+                    <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row" style="height: 60%">
+        <div class="col w-100 bg-light">
+            <div class="card my-1 mx-1" style="height: 100%">
+                <div class="card-body">
+                    <h5 class="card-title">d3-image</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</html>
