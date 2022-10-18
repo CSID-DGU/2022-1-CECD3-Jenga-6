@@ -1,6 +1,7 @@
 package com.jenga.weather.web.sign.controller;
 
 import com.jenga.weather.domain.member.service.MemberService;
+import com.jenga.weather.web.sign.dto.KeysForm;
 import com.jenga.weather.web.sign.dto.LoginForm;
 import com.jenga.weather.web.sign.dto.SignupForm;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.security.Principal;
 
 @Controller
 @RequiredArgsConstructor
@@ -51,5 +54,23 @@ public class SignController {
         model.addAttribute("errorMsg", "로그인이 실패했습니다.");
         model.addAttribute("loginForm", new LoginForm());
         return "page/member_login";
+    }
+
+    @GetMapping("/aws-key")
+    public String showKeysForm(Model model) {
+        model.addAttribute("keysForm", new KeysForm());
+        return "page/member_keys";
+    }
+
+    @PostMapping("/aws-key")
+    public String saveKeys(@Validated @ModelAttribute KeysForm keysForm, BindingResult bindingResult,
+                           Principal principal) {
+
+        if (bindingResult.hasErrors()) {
+            return "page/member_keys";
+        }
+
+        memberService.updateKeys(principal.getName(), keysForm.getAccessKey(), keysForm.getSecretKey());
+        return "redirect:/infra/visualization";
     }
 }

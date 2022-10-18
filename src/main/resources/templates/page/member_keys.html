@@ -1,0 +1,25 @@
+<html layout:decorate="~{global/layout}">
+<div layout:fragment="content" style="height: 820px;" class="container my-5">
+
+
+    <form th:action="@{/aws-key}" th:object="${keysForm}" method="post" class="w-50 mx-auto">
+        <h2 class="mt-3">AWS KEY 설정</h2>
+
+        <div class="mb-3" th:if="${error}">
+            <div th:text="${errorMsg}" class="field-error"></div>
+        </div>
+
+        <div class="mb-3">
+            <input type="text" th:field="*{accessKey}" th:errorclass="field-error" class="form-control" placeholder="access-key">
+            <div th:if="${#fields.hasErrors('accessKey')}" th:errorclass="field-error" th:errors="*{accessKey}"></div>
+        </div>
+        <div class="mb-3">
+            <input type="password" th:field="*{secretKey}" th:errorclass="field-error" class="form-control" placeholder="secret-key">
+            <div th:if="${#fields.hasErrors('secretKey')}" th:errorclass="field-error" th:errors="*{secretKey}"></div>
+        </div>
+        <button type="submit" class="btn create float-end">키 설정</button>
+    </form>
+
+
+</div>
+</html>
