@@ -1,0 +1,23 @@
+<html layout:decorate="~{global/layout}">
+<div layout:fragment="content" style="height: 820px;" class="container my-5">
+
+<form th:action="@{/login}" th:object="${loginForm}" method="post" class="w-50 mx-auto">
+    <h2 class="mt-3">로그인</h2>
+
+    <div class="mb-3" th:if="${error}">
+        <div th:text="${errorMsg}" class="field-error"></div>
+    </div>
+
+    <div class="mb-3">
+        <input type="text" th:field="*{username}" th:errorclass="field-error" class="form-control" placeholder="아이디">
+        <div th:if="${#fields.hasErrors('username')}" th:errorclass="field-error" th:errors="*{username}"></div>
+    </div>
+    <div class="mb-3">
+        <input type="password" th:field="*{password}" th:errorclass="field-error" class="form-control" placeholder="비밀번호">
+        <div th:if="${#fields.hasErrors('password')}" th:errorclass="field-error" th:errors="*{password}"></div>
+    </div>
+    <button type="submit" class="btn create float-end">로그인</button>
+</form>
+
+</div>
+</html>

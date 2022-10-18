@@ -1,0 +1,31 @@
+<html layout:decorate="~{global/layout}">
+<div layout:fragment="content" style="height: 820px;" class="container my-5">
+
+<form th:action="@{/signup}" th:object="${signupForm}" method="post" class="w-50 mx-auto">
+    <h2 class="mb-3 mt-3">회원가입</h2>
+
+    <div th:if="${#fields.hasGlobalErrors()}">
+        <p class="field-error" th:each="err : ${#fields.globalErrors()}" th:text="${err}">전체 오류 메시지</p>
+    </div>
+
+    <div class="mb-3">
+        <input type="text" th:field="*{username}" th:errorclass="field-error" class="form-control" placeholder="아이디">
+        <div th:if="${#fields.hasErrors('username')}" th:errorclass="field-error" th:errors="*{username}"></div>
+    </div>
+    <div class="mb-3">
+        <input type="password" th:field="*{password}" th:errorclass="field-error" class="form-control" placeholder="비밀번호">
+        <div th:if="${#fields.hasErrors('password')}" th:errorclass="field-error" th:errors="*{password}"></div>
+    </div>
+    <div class="mb-3">
+        <input type="password" th:field="*{passwordConfirm}" th:errorclass="field-error" class="form-control" placeholder="비밀번호 확인">
+        <div th:if="${#fields.hasErrors('passwordConfirm')}" th:errorclass="field-error" th:errors="*{passwordConfirm}"></div>
+    </div>
+    <div class="mb-3">
+        <input type="text" th:field="*{email}" th:errorclass="field-error" class="form-control" placeholder="이메일">
+        <div th:if="${#fields.hasErrors('email')}" th:errorclass="field-error" th:errors="*{email}"></div>
+    </div>
+    <button type="submit" class="btn create float-end">회원가입</button>
+</form>
+
+</div>
+</html>
