@@ -22,6 +22,8 @@ public class NATService {
                         .resourceName(!v.tags().isEmpty() ? v.tags().get(0).value() : "-")
                         .subnetId(v.subnetId())
                         .vpcId(v.vpcId())
+                        .publicIP(v.natGatewayAddresses().get(0).publicIp())
+                        .privateIP(v.natGatewayAddresses().get(0).privateIp())
                         .build();
 
                 natList.add(nat);

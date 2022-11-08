@@ -21,13 +21,19 @@ public class NAT extends AWSEntity {
 
     private String subnetId;
 
+    private String publicIP;
+    private String privateIP;
+
     @Override
     public String toString() {
         return "NAT{" +
-                "resourceId='" + resourceId + '\'' +
+                "id=" + id +
+                ", subnetId='" + subnetId + '\'' +
+                ", publicIP='" + publicIP + '\'' +
+                ", privateIP='" + privateIP + '\'' +
+                ", resourceId='" + resourceId + '\'' +
                 ", resourceName='" + resourceName + '\'' +
                 ", vpcId='" + vpcId + '\'' +
-                ", subnetId='" + subnetId + '\'' +
                 '}';
     }
 }
