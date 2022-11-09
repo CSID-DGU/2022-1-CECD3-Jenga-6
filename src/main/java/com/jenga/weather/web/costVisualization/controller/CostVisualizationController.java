@@ -3,6 +3,7 @@ package com.jenga.weather.web.costVisualization.controller;
 import com.jenga.weather.web.costVisualization.dto.CostByTimeDto;
 import com.jenga.weather.web.costVisualization.service.CostVisualizationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,5 +22,10 @@ public class CostVisualizationController {
         model.addAttribute("costList", costList);
 
         return "page/cost_visualization";
+    }
+
+    @GetMapping("/cost/result")
+    public ResponseEntity<List<CostByTimeDto>> getCost() {
+        return ResponseEntity.ok(costVisualizationService.getCostByDate("2022-10-08", "2022-11-09"));
     }
 }
