@@ -30,14 +30,13 @@ public class CostVisualizationService {
         CostExplorerClient costExplorerClient = CostExplorerClient.builder()
                 .region(Region.AWS_GLOBAL)
                 .build();
+
         List<ResultByTime> resultByTimeList = costExplorerClient.getCostAndUsage(costAndUsageRequest).resultsByTime();
-
         List<CostByTimeDto> costByTimeDtoList = new ArrayList<>();
-        List<CostDto> costDtoList = new ArrayList<>();
-        setInstanceName(costDtoList);
-
         double totalCost, totalUtilization;
         for (ResultByTime result : resultByTimeList) {
+            List<CostDto> costDtoList = new ArrayList<>();
+            setInstanceName(costDtoList);
             totalCost = 0;
             totalUtilization = 0;
             for (Group group : result.groups()) {
