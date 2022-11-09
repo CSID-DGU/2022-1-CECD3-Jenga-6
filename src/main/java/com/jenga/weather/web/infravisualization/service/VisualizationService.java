@@ -11,6 +11,7 @@ import com.jenga.weather.domain.nat.model.NAT;
 import com.jenga.weather.domain.nat.service.NATService;
 import com.jenga.weather.domain.rds.model.RDS;
 import com.jenga.weather.domain.rds.service.RDSService;
+import com.jenga.weather.domain.routeTable.service.RouteTableService;
 import com.jenga.weather.domain.s3.model.S3;
 import com.jenga.weather.domain.s3.service.S3Service;
 import com.jenga.weather.domain.subnet.model.Subnet;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.RouteTable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,6 +54,7 @@ public class VisualizationService {
     private final S3Service s3Service;
     private final SubnetService subnetService;
     private final VPCService vpcService;
+    private final RouteTableService routeTableService;
 
     public String mapInfra() {
         Ec2Client ec2Client = Ec2Client.builder()
@@ -151,6 +154,7 @@ public class VisualizationService {
         List<IGW> igwList = igwService.getIGWInstances(ec2Client);
         List<NAT> natList = natService.getNATInstances(ec2Client);
         List<Subnet> subnetList = subnetService.getSubnetInstances(ec2Client);
+        List<RouteTable> routeTableList = routeTableService.getRouteTableInstances(ec2Client);
 
         List<RdsNode> rdsList = new ArrayList<>();
         int rds_idx = 0;
@@ -243,6 +247,7 @@ public class VisualizationService {
                         .id(subnet.getResourceId())
                         .name("subnet-" + vpcIdx + "-" + subnetIdx)
                         .size(4)
+                        .href("/img/aws_private_subnet.png")
                         .resource_name(subnet.getResourceName())
                         .vpc_id(subnet.getVpcId())
                         .build();
@@ -269,6 +274,24 @@ public class VisualizationService {
                     natIdx += 1;
                 }
                 natIdx = 0;
+
+//                List<RouteTable> routeTables = routeTableList.stream()
+//                        .filter(r -> r.vpcId().equals(vpc.getResourceId()) &&
+//                                r.associations().get(0).subnetId().equals(subnet.getResourceId()))
+//                        .collect(Collectors.toList());
+//
+//                if (routeTables.size() >= 1) {
+//                    List<Route> routes = routeTables.get(0).routes();
+//
+//                    for (Route route : routes) {
+//                        EntryNode entryNode = EntryNode.builder()
+//                                .destination_cidr_block(route.destinationCidrBlock())
+//                                .state(String.valueOf(route.state()))
+//                                .build();
+//                    }
+//
+//                }
+
 
                 List<RdsNode> rdsNodes = rdsList.stream()
                         .filter(r -> r.getVpc_id().equals(vpc.getResourceId())

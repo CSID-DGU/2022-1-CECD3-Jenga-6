@@ -26,7 +26,14 @@ public class SubnetNode {
     @Builder.Default
     private List<Object> children = new ArrayList<>();
 
+    @Builder.Default
+    private List<Object> route_table = new ArrayList<>();
+
     public void addChildren(Object object) {
         this.children.add(object);
+    }
+
+    public void addRouteTable(Object object) {
+        this.route_table.add(object);
     }
 }
