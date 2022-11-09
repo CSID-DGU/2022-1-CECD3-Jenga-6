@@ -20,8 +20,15 @@ import com.jenga.weather.domain.vpc.service.VPCService;
 import com.jenga.weather.web.infravisualization.node.Graph;
 import com.jenga.weather.web.infravisualization.node.LeafNode;
 import com.jenga.weather.web.infravisualization.node.RootNode;
+import com.jenga.weather.web.infravisualization.node.dto.Ec2Node;
+import com.jenga.weather.web.infravisualization.node.dto.ElbNode;
+import com.jenga.weather.web.infravisualization.node.dto.IgwNode;
+import com.jenga.weather.web.infravisualization.node.dto.NatNode;
+import com.jenga.weather.web.infravisualization.node.dto.RdsNode;
+import com.jenga.weather.web.infravisualization.node.dto.S3Node;
+import com.jenga.weather.web.infravisualization.node.dto.SubnetNode;
+import com.jenga.weather.web.infravisualization.node.dto.VpcNode;
 import lombok.RequiredArgsConstructor;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
@@ -125,7 +132,7 @@ public class VisualizationService {
         return result.toString();
     }
 
-    public String getData() {
+    public Graph getData() {
         int subnetIdx = 0;
         int ec2Idx = 0;
         int natIdx = 0;
@@ -145,76 +152,86 @@ public class VisualizationService {
         List<NAT> natList = natService.getNATInstances(ec2Client);
         List<Subnet> subnetList = subnetService.getSubnetInstances(ec2Client);
 
-
-        List<JSONObject> rdsList = new ArrayList<>();
+        List<RdsNode> rdsList = new ArrayList<>();
         int rds_idx = 0;
         for (RDS rds : rdsService.getRDSInstances()) {
-            JSONObject rds_node = new JSONObject();
-            rds_node.put("id", rds.getResourceId() + '@' + rds_idx);
-            rds_node.put("name", rds.getResourceName());
-            rds_node.put("href", "/img/aws_rds.png");
-            rds_node.put("engine", rds.getEngine());
-            rds_node.put("vpc_id", rds.getVpcId());
-            rds_node.put("subnet_id", rds.getSubnetId());
-            rds_node.put("status", rds.getDbInstanceStatus());
-            rds_node.put("dbInstanceClass", rds.getDbInstanceClass());
-            rds_node.put("region", rds.getRegion());
-            rds_node.put("children", new JSONArray().put(new LeafNode()));
-            rdsList.add(rds_node);
+            RdsNode rdsNode = RdsNode.builder()
+                    .id(rds.getResourceId() + '@' + rds_idx)
+                    .name(rds.getResourceName())
+                    .href("/img/aws_rds.png")
+                    .engine(rds.getEngine())
+                    .vpc_id(rds.getVpcId())
+                    .subnet_id(rds.getSubnetId())
+                    .status(rds.getDbInstanceStatus())
+                    .db_instance_class(rds.getDbInstanceClass())
+                    .region(rds.getRegion())
+                    .build();
+
+            rdsNode.addChildren(new LeafNode());
+            rdsList.add(rdsNode);
             rds_idx += 1;
         }
 
         for (S3 s3 : s3Service.getS3Instances()) {
-            JSONObject s3_node = new JSONObject();
-            s3_node.put("id", "s3-" + s3.getResourceName());
-            s3_node.put("name", s3.getResourceName());
-            s3_node.put("href", "/img/aws_s3.png");
-            s3_node.put("children", new JSONArray().put(new LeafNode()));
-            rootNode.addChildren(s3_node);
+            S3Node s3Node = S3Node.builder()
+                    .id("s3-" + s3.getResourceName())
+                    .name(s3.getResourceName())
+                    .href("/img/aws_s3.png")
+                    .build();
+            s3Node.addChildren(new LeafNode());
+
+            rootNode.addChildren(s3Node);
         }
 
         int vpcIdx = 0;
         int igwIdx = 0;
         for (VPC vpc : vpcService.getVPCInstances(ec2Client)) {
-            JSONObject vpc_node = new JSONObject();
-            vpc_node.put("id", vpc.getResourceId());
-            vpc_node.put("name", "vpc-" + vpcIdx);
-            vpc_node.put("resource_name", vpc.getResourceName());
-            vpc_node.put("size", 5);
-            vpc_node.put("href", "/img/aws_vpc.png");
-            vpc_node.put("children", new JSONArray().put(new LeafNode()));
+            VpcNode vpcNode = VpcNode.builder()
+                    .id(vpc.getResourceId())
+                    .name("vpc-" + vpcIdx)
+                    .resource_name(vpc.getResourceName())
+                    .size(5)
+                    .href("/img/aws_vpc.png")
+                    .build();
+            vpcNode.addChildren(new LeafNode());
 
             List<IGW> igws = igwList.stream()
                     .filter(i -> i.getVpcId().equals(vpc.getResourceId()))
                     .collect(Collectors.toList());
 
             IGW igw = igws.get(0);
-            JSONObject igw_node = new JSONObject();
-            igw_node.put("id", igw.getResourceId());
-            igw_node.put("name", "igw-" + vpcIdx + "-" + igwIdx);
-            igw_node.put("owner_id", igw.getOwnerId());
-            igw_node.put("size", 4);
-            igw_node.put("href", "/img/aws_igw.png");
-            igw_node.put("children", new JSONArray().put(new LeafNode()));
-            vpc_node.getJSONArray("children").put(igw_node);
+
+            IgwNode igwNode = IgwNode.builder()
+                    .id(igw.getResourceId())
+                    .name("igw-" + vpcIdx + "-" + igwIdx)
+                    .owner_id(igw.getOwnerId())
+                    .size(4)
+                    .href("/img/aws_igw.png")
+                    .build();
+            igwNode.addChildren(new LeafNode());
+
+            vpcNode.addChildren(igwNode);
 
             List<ELB> elbs = elbList.stream()
                     .filter(e -> e.getVpcId().equals(vpc.getResourceId()))
                     .collect(Collectors.toList());
 
             for (ELB elb : elbs) {
-                JSONObject elb_node = new JSONObject();
-                elb_node.put("id", "elb-" + vpc_node.get("id"));
-                elb_node.put("name", "elb-" + elb.getResourceName());
-                elb_node.put("href", "/img/aws_elb.png");
-                elb_node.put("state", elb.getState());
-                elb_node.put("vpc_id", elb.getVpcId());
-                elb_node.put("resource_name", elb.getResourceName());
-                elb_node.put("children", new JSONArray().put(new LeafNode()));
+                ElbNode elbNode = ElbNode.builder()
+                        .id("elb-" + vpcNode.getId())
+                        .name("elb-" + elb.getResourceName())
+                        .href("/img/aws_elb.png")
+                        .state(elb.getState())
+                        .vpc_id(elb.getVpcId())
+                        .resource_name(elb.getResourceName())
+                        .build();
+
+                elbNode.addChildren(new LeafNode());
+
                 graph.addLink(new JSONObject()
-                        .put("source", elb_node.get("id"))
-                        .put("target", igw_node.get("id")));
-                vpc_node.getJSONArray("children").put(elb_node);
+                        .put("source", elbNode.getId())
+                        .put("target", igwNode.getId()));
+                vpcNode.addChildren(elbNode);
             }
 
             List<Subnet> subnets = subnetList.stream()
@@ -222,13 +239,14 @@ public class VisualizationService {
                     .collect(Collectors.toList());
 
             for (Subnet subnet : subnets) {
-                JSONObject subnet_node = new JSONObject();
-                subnet_node.put("id", subnet.getResourceId());
-                subnet_node.put("name", "subnet-" + vpcIdx + "-" + subnetIdx);
-                subnet_node.put("size", 4);
-                subnet_node.put("resource_name", subnet.getResourceName());
-                subnet_node.put("vpc_id", subnet.getVpcId());
-                subnet_node.put("children", new JSONArray().put(new LeafNode()));
+                SubnetNode subnetNode = SubnetNode.builder()
+                        .id(subnet.getResourceId())
+                        .name("subnet-" + vpcIdx + "-" + subnetIdx)
+                        .size(4)
+                        .resource_name(subnet.getResourceName())
+                        .vpc_id(subnet.getVpcId())
+                        .build();
+                subnetNode.addChildren(new LeafNode());
 
                 List<NAT> nats = natList.stream()
                         .filter(n -> n.getVpcId().equals(vpc.getResourceId())
@@ -236,28 +254,30 @@ public class VisualizationService {
                         .collect(Collectors.toList());
 
                 for (NAT nat : nats) {
-                    JSONObject nat_node = new JSONObject();
-                    nat_node.put("id", nat.getResourceId());
-                    nat_node.put("name", "nat-" + vpcIdx + "-" + subnetIdx + "-" + natIdx);
-                    nat_node.put("href", "/img/aws_nat.png");
-                    nat_node.put("private_ip", nat.getPrivateIP());
-                    nat_node.put("public_ip", nat.getPublicIP());
-                    nat_node.put("vpc_id", nat.getVpcId());
-                    nat_node.put("subnet_id", nat.getSubnetId());
-                    nat_node.put("children", new JSONArray().put(new LeafNode()));
-                    subnet_node.getJSONArray("children").put(nat_node);
+                    NatNode natNode = NatNode.builder()
+                            .id(nat.getResourceId())
+                            .name("nat-" + vpcIdx + "-" + subnetIdx + "-" + natIdx)
+                            .href("/img/aws_nat.png")
+                            .private_ip(nat.getPrivateIP())
+                            .public_ip(nat.getPublicIP())
+                            .vpc_id(nat.getVpcId())
+                            .subnet_id(nat.getSubnetId())
+                            .build();
+                    natNode.addChildren(new LeafNode());
+
+                    subnetNode.addChildren(natNode);
                     natIdx += 1;
                 }
                 natIdx = 0;
 
-                List<JSONObject> rdsNodes = rdsList.stream()
-                        .filter(r -> r.get("vpc_id").equals(vpc.getResourceId())
-                                && r.get("subnet_id").equals(subnet.getResourceId()))
+                List<RdsNode> rdsNodes = rdsList.stream()
+                        .filter(r -> r.getVpc_id().equals(vpc.getResourceId())
+                                && r.getSubnet_id().equals(subnet.getResourceId()))
                         .collect(Collectors.toList());
 
-                for (JSONObject rdsNode : rdsNodes) {
-                    rdsNode.put("name", "rds-" + vpcIdx + "-" + subnetIdx);
-                    subnet_node.getJSONArray("children").put(rdsNode);
+                for (RdsNode rdsNode : rdsNodes) {
+                    rdsNode.setName("rds-" + vpcIdx + "-" + subnetIdx);
+                    subnetNode.addChildren(rdsNode);
                 }
 
                 List<EC2> ec2s = ec2List.stream()
@@ -265,34 +285,36 @@ public class VisualizationService {
                         .collect(Collectors.toList());
 
                 for (EC2 ec2 : ec2s) {
-                    JSONObject ec2_node = new JSONObject();
-                    ec2_node.put("id", ec2.getResourceId());
-                    ec2_node.put("name", "ec2-" + vpcIdx + "-" + subnetIdx + "-" + ec2Idx);
-                    ec2_node.put("size", 3);
-                    ec2_node.put("href", "/img/aws_ec2.png");
-                    ec2_node.put("type", ec2.getInstanceType());
-                    ec2_node.put("private_dns_name", ec2.getPrivateDnsName());
-                    ec2_node.put("private_ip_address", ec2.getPrivateIpAddress());
-                    ec2_node.put("image_id", ec2.getImageId());
-                    ec2_node.put("key_name", ec2.getKeyName());
-                    ec2_node.put("subnet_id", ec2.getSubnetId());
-                    ec2_node.put("vpc_id", ec2.getVpcId());
-                    ec2_node.put("resource_name", ec2.getResourceName());
-                    ec2_node.put("children", new JSONArray().put(new LeafNode()));
-                    subnet_node.getJSONArray("children").put(ec2_node);
+                    Ec2Node ec2Node = Ec2Node.builder()
+                            .id(ec2.getResourceId())
+                            .name("ec2-" + vpcIdx + "-" + subnetIdx + "-" + ec2Idx)
+                            .size(3)
+                            .href("/img/aws_ec2.png")
+                            .type(ec2.getInstanceType())
+                            .private_dns_name(ec2.getPrivateDnsName())
+                            .private_ip_address(ec2.getPrivateIpAddress())
+                            .image_id(ec2.getImageId())
+                            .key_name(ec2.getKeyName())
+                            .subnet_id(ec2.getSubnetId())
+                            .vpc_id(ec2.getVpcId())
+                            .resource_name(ec2.getResourceName())
+                            .build();
+                    ec2Node.addChildren(new LeafNode());
+
+                    subnetNode.addChildren(ec2Node);
                     ec2Idx += 1;
                 }
                 ec2Idx = 0;
-                vpc_node.getJSONArray("children").put(subnet_node);
+                vpcNode.addChildren(subnetNode);
                 subnetIdx += 1;
             }
             subnetIdx = 0;
-            rootNode.addChildren(vpc_node);
+            rootNode.addChildren(vpcNode);
             vpcIdx += 1;
         }
 
         graph.setRoot(rootNode);
 
-        return graph.toString();
+        return graph;
     }
 }

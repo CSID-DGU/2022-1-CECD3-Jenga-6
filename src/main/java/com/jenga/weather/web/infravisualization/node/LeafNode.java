@@ -1,10 +1,14 @@
 package com.jenga.weather.web.infravisualization.node;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
+@Setter
 public class LeafNode {
 
     private String id;

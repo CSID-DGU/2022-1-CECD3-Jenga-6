@@ -1,15 +1,18 @@
 package com.jenga.weather.web.infravisualization.node;
 
-import org.json.JSONObject;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
+@Setter
 public class RootNode {
 
     private String id;
     private String name;
-    private List<JSONObject> children;
+    private List<Object> children;
 
     public RootNode() {
         this.id = "root";
@@ -17,8 +20,8 @@ public class RootNode {
         this.children = new ArrayList<>();
     }
 
-    public void addChildren(JSONObject jsonObject) {
-        children.add(jsonObject);
+    public void addChildren(Object object) {
+        children.add(object);
     }
 
     @Override

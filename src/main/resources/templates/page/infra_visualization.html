@@ -32,15 +32,30 @@
             </div>
         </div>
     </div>
-    <div class="row" style="height: 60%">
+    <div class="row" style="height: 60%" onload="render()">
         <div class="col w-100 bg-light">
             <div class="card my-1 mx-1" style="height: 100%">
                 <div class="card-body">
-                    <h5 class="card-title"></h5>
-                    <div th:text="${visualization}"></div>
+                    <button type="button" class="button--refresh" onclick="render()">
+                        <i class="fas fa-spinner"></i>
+                    </button>
+                    <div class="content">
+                        <svg width="960" height="960"></svg>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script
+            src="https://kit.fontawesome.com/b98b5bbdbb.js"
+            crossorigin="anonymous"
+    ></script>
+    <script src="//code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script
+            type="text/javascript"
+            src="/js/d3/make_circle.js"
+    ></script>
 </div>
 </html>
