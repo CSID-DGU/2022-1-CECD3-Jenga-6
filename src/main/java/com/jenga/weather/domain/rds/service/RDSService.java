@@ -34,6 +34,7 @@ public class RDSService {
                         .region(v.availabilityZone())
                         .dbInstanceClass(v.dbInstanceClass())
                         .dbInstanceStatus(v.dbInstanceStatus())
+                        .subnetGroups(v.dbSubnetGroup().subnets())
                         .vpcId(v.dbSubnetGroup().vpcId());
                 for (Subnet subnet : v.dbSubnetGroup().subnets()) {
                     if (Objects.equals(subnet.subnetAvailabilityZone().name(), v.availabilityZone()))

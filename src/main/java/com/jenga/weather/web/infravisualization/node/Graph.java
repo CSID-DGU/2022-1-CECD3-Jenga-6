@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 public class Graph {
-    private List<JSONObject> links;
+    private List<Link> links;
     private RootNode root;
 
     public Graph() {
@@ -18,8 +18,8 @@ public class Graph {
         this.root = null;
     }
 
-    public void addLink(JSONObject jsonObject) {
-        this.links.add(jsonObject);
+    public void addLink(Link link) {
+        this.links.add(link);
     }
 
     public void setRoot(RootNode root) {
