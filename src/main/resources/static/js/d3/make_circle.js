@@ -103,15 +103,13 @@ const init = function (graph) {
 
     function get_color(d) {
         const id = d.data.id;
-        return "hsl(0, 0%, 0%)";
-        // if (d === root || d.height === 0) {
-        //     return "hsl(0, 0%, 0%)";
-        // } else if (id.startsWith("subnet")) {
-        //     return color[`${d.data.type}_subnet`];
-        //
-        // } else {
-        //     return color[id.split("-")[0]];
-        // }
+        if (d === root || d.height === 0) {
+             return "hsl(0, 0%, 0%)";
+        } else if (id.startsWith("subnet")) {
+             return color[`${d.data.type}_subnet`];
+        } else {
+             return color[id.split("-")[0]];
+        }
     }
 
     d3.selectAll(".nodeGroup").remove();
