@@ -83,6 +83,33 @@
                                 .domain(subgroups)
                                 .range(["#6646C9", "#5BACA1", "#EC7A66", "#F7DC42", "#963054", "#6CC75E"])
 
+                            const tooltip = d3.select("#infra")
+                                .append("div")
+                                .style("opacity", 0)
+                                .attr("class", "tooltip")
+                                .style("background-color", "white")
+                                .style("border", "solid")
+                                .style("border-width", "1px")
+                                .style("border-radius", "5px")
+                                .style("padding", "10px")
+
+                            const mouseover = function (event, d) {
+                                const subgroupName = d3.select(this.parentNode).datum().key;
+                                const subgroupValue = d.data[subgroupName];
+                                tooltip
+                                    .html("종류: " + subgroupName + "<br>" + "비용: " + subgroupValue)
+                                    .style("opacity", 1)
+                            }
+                            const mousemove = function (event, d) {
+                                tooltip.style("transform", "translateY(-55%)")
+                                    .style("left", (event.x) / 2 + "px")
+                                    .style("top", (event.y) / 2 - 30 + "px")
+                            }
+                            const mouseleave = function (event, d) {
+                                tooltip
+                                    .style("opacity", 0)
+                            }
+
                             const stackedData = d3.stack()
                                 .keys(subgroups)
                                 (chartData)
@@ -99,6 +126,9 @@
                                 .attr("y", d => y(d[1]))
                                 .attr("height", d => y(d[0]) - y(d[1]))
                                 .attr("width", x.bandwidth())
+                                .on("mouseover", mouseover)
+                                .on("mousemove", mousemove)
+                                .on("mouseleave", mouseleave)
                         })
 
                         const svg2 = d3.select("#infra")
