@@ -22,6 +22,7 @@ public class SubnetNode {
     private int size;
     private String vpc_id;
     private String resource_name;
+    private String type;
 
     @Builder.Default
     private List<Object> children = new ArrayList<>();

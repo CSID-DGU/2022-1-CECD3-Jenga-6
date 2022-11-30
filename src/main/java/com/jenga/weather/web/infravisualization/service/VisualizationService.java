@@ -1,6 +1,5 @@
 package com.jenga.weather.web.infravisualization.service;
 
-import com.jenga.weather.domain.base.AWSEntity;
 import com.jenga.weather.domain.ec2.model.EC2;
 import com.jenga.weather.domain.ec2.service.EC2Service;
 import com.jenga.weather.domain.elb.model.ELB;
@@ -18,11 +17,14 @@ import com.jenga.weather.domain.subnet.model.Subnet;
 import com.jenga.weather.domain.subnet.service.SubnetService;
 import com.jenga.weather.domain.vpc.model.VPC;
 import com.jenga.weather.domain.vpc.service.VPCService;
+import com.jenga.weather.web.infravisualization.dto.VpcDto;
 import com.jenga.weather.web.infravisualization.node.Graph;
 import com.jenga.weather.web.infravisualization.node.LeafNode;
+import com.jenga.weather.web.infravisualization.node.Link;
 import com.jenga.weather.web.infravisualization.node.RootNode;
 import com.jenga.weather.web.infravisualization.node.dto.Ec2Node;
 import com.jenga.weather.web.infravisualization.node.dto.ElbNode;
+import com.jenga.weather.web.infravisualization.node.dto.EntryNode;
 import com.jenga.weather.web.infravisualization.node.dto.IgwNode;
 import com.jenga.weather.web.infravisualization.node.dto.NatNode;
 import com.jenga.weather.web.infravisualization.node.dto.RdsNode;
@@ -30,15 +32,14 @@ import com.jenga.weather.web.infravisualization.node.dto.S3Node;
 import com.jenga.weather.web.infravisualization.node.dto.SubnetNode;
 import com.jenga.weather.web.infravisualization.node.dto.VpcNode;
 import lombok.RequiredArgsConstructor;
-import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.Route;
 import software.amazon.awssdk.services.ec2.model.RouteTable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,86 +57,27 @@ public class VisualizationService {
     private final VPCService vpcService;
     private final RouteTableService routeTableService;
 
-    public String mapInfra() {
+    public List<VpcDto> getVpcs() {
+
         Ec2Client ec2Client = Ec2Client.builder()
                 .region(Region.AP_NORTHEAST_2)
                 .credentialsProvider(ProfileCredentialsProvider.create())
                 .build();
 
-        // Infra Resource 목록 조회
-        List<EC2> ec2List = ec2Service.getEC2Instances(ec2Client);
-        List<ELB> elbList = elbService.getELBInstances();
-        List<IGW> igwList = igwService.getIGWInstances(ec2Client);
-        List<NAT> natList = natService.getNATInstances(ec2Client);
-        List<RDS> rdsList = rdsService.getRDSInstances();
-        List<S3> s3List = s3Service.getS3Instances();
-        List<Subnet> subnetList = subnetService.getSubnetInstances(ec2Client);
-        List<VPC> vpcList = vpcService.getVPCInstances(ec2Client);
+        List<VpcDto> vpcDtoList = new ArrayList<>();
 
-        // Subnet 별 매핑
-        HashMap<Subnet, List<AWSEntity>> subnetMapping = new HashMap<>();
-        subnetList.forEach(subnet -> {
-            List<AWSEntity> entities = new ArrayList<>();
-            ec2List.forEach(vv -> {
-                if (vv.getSubnetId().equals(subnet.getResourceId()))
-                    entities.add(vv);
-            });
-            natList.forEach(vv -> {
-                if (vv.getSubnetId().equals(subnet.getResourceId()))
-                    entities.add(vv);
-            });
-            rdsList.forEach(vv -> {
-                if (vv.getSubnetId().equals(subnet.getResourceId()))
-                    entities.add(vv);
-            });
-            subnetMapping.put(subnet, entities);
-        });
+        for (VPC vpc : vpcService.getVPCInstances(ec2Client)) {
+            VpcDto vpcDto = VpcDto.builder()
+                    .vpcId(vpc.getResourceId())
+                    .name(vpc.getResourceName())
+                    .build();
+            vpcDtoList.add(vpcDto);
+        }
 
-        // VPC 별 매핑
-        HashMap<VPC, List<Subnet>> vpcMapping = new HashMap<>();
-        vpcList.forEach(v -> {
-            List<Subnet> subnets = new ArrayList<>();
-            subnetMapping.forEach((k, vv) -> {
-                if (v.getResourceId().equals(k.getVpcId())) {
-                    subnets.add(k);
-                }
-                vpcMapping.put(v, subnets);
-            });
-        });
-
-        // Infra 관계 생성
-        StringBuffer result = new StringBuffer();
-        result.append("VPC-Subnet 별 Resource\n");
-        result.append("--------------------------------------------------\n");
-        vpcMapping.forEach((vpc, subnets) -> {
-            result.append("VPC : ").append(vpc).append("\n");
-            subnets.forEach(subnet -> {
-                result.append("    |Subnet : ").append(subnet).append("\n");
-                subnetMapping.get(subnet).forEach(entity ->
-                        result.append("        |").append(entity.toString()).append("\n")
-                );
-                elbList.forEach(entity -> {
-                    if (entity.getVpcId().equals(vpc.getResourceId()))
-                        result.append("    |").append(entity).append("\n");
-                });
-                igwList.forEach(entity -> {
-                    if (entity.getVpcId().equals(vpc.getResourceId()))
-                        result.append("        |").append(entity).append("\n");
-                });
-                result.append("\n");
-            });
-            result.append("\n");
-            System.out.println();
-        });
-        result.append("S3-------------------------------------------------\n");
-        s3List.forEach(entity ->
-                result.append(entity.toString()).append("\n")
-        );
-
-        return result.toString();
+        return vpcDtoList;
     }
 
-    public Graph getData() {
+    public Graph getInstances(String vpcId) {
         int subnetIdx = 0;
         int ec2Idx = 0;
         int natIdx = 0;
@@ -159,21 +101,28 @@ public class VisualizationService {
         List<RdsNode> rdsList = new ArrayList<>();
         int rds_idx = 0;
         for (RDS rds : rdsService.getRDSInstances()) {
-            RdsNode rdsNode = RdsNode.builder()
-                    .id(rds.getResourceId() + '@' + rds_idx)
-                    .name(rds.getResourceName())
-                    .href("/img/aws_rds.png")
-                    .engine(rds.getEngine())
-                    .vpc_id(rds.getVpcId())
-                    .subnet_id(rds.getSubnetId())
-                    .status(rds.getDbInstanceStatus())
-                    .db_instance_class(rds.getDbInstanceClass())
-                    .region(rds.getRegion())
-                    .build();
+            for (software.amazon.awssdk.services.rds.model.Subnet sub : rds.getSubnetGroups()) {
+                RdsNode rdsNode = RdsNode.builder()
+                        .id(rds.getResourceId() + '@' + rds_idx)
+                        .name(rds.getResourceName())
+                        .href("/img/aws_rds.png")
+                        .engine(rds.getEngine())
+                        .vpc_id(rds.getVpcId())
+                        .subnet_id(sub.subnetIdentifier())
+                        .status(rds.getDbInstanceStatus())
+                        .db_instance_class(rds.getDbInstanceClass())
+                        .region(rds.getRegion())
+                        .build();
 
-            rdsNode.addChildren(new LeafNode());
-            rdsList.add(rdsNode);
-            rds_idx += 1;
+                rdsNode.addChildren(new LeafNode());
+                rdsList.add(rdsNode);
+                rds_idx += 1;
+            }
+
+            for (int i = 0; i < rds_idx - 1; i++) {
+                graph.addLink(new Link(rds.getResourceId() + "@" + i,
+                        rds.getResourceId() + "@" + (i + 1)));
+            }
         }
 
         for (S3 s3 : s3Service.getS3Instances()) {
@@ -189,7 +138,19 @@ public class VisualizationService {
 
         int vpcIdx = 0;
         int igwIdx = 0;
-        for (VPC vpc : vpcService.getVPCInstances(ec2Client)) {
+
+        List<VPC> vpcs;
+
+        if (vpcId.equals("all")) {
+            vpcs = vpcService.getVPCInstances(ec2Client);
+        } else {
+            vpcs = vpcService.getVPCInstances(ec2Client)
+                    .stream()
+                    .filter(vpc -> vpc.getResourceId().equals(vpcId))
+                    .collect(Collectors.toList());
+        }
+
+        for (VPC vpc : vpcs) {
             VpcNode vpcNode = VpcNode.builder()
                     .id(vpc.getResourceId())
                     .name("vpc-" + vpcIdx)
@@ -232,9 +193,7 @@ public class VisualizationService {
 
                 elbNode.addChildren(new LeafNode());
 
-                graph.addLink(new JSONObject()
-                        .put("source", elbNode.getId())
-                        .put("target", igwNode.getId()));
+                graph.addLink(new Link(elbNode.getId(), igwNode.getId()));
                 vpcNode.addChildren(elbNode);
             }
 
@@ -247,7 +206,6 @@ public class VisualizationService {
                         .id(subnet.getResourceId())
                         .name("subnet-" + vpcIdx + "-" + subnetIdx)
                         .size(4)
-                        .href("/img/aws_private_subnet.png")
                         .resource_name(subnet.getResourceName())
                         .vpc_id(subnet.getVpcId())
                         .build();
@@ -275,23 +233,49 @@ public class VisualizationService {
                 }
                 natIdx = 0;
 
-//                List<RouteTable> routeTables = routeTableList.stream()
-//                        .filter(r -> r.vpcId().equals(vpc.getResourceId()) &&
-//                                r.associations().get(0).subnetId().equals(subnet.getResourceId()))
-//                        .collect(Collectors.toList());
-//
-//                if (routeTables.size() >= 1) {
-//                    List<Route> routes = routeTables.get(0).routes();
-//
-//                    for (Route route : routes) {
-//                        EntryNode entryNode = EntryNode.builder()
-//                                .destination_cidr_block(route.destinationCidrBlock())
-//                                .state(String.valueOf(route.state()))
-//                                .build();
-//                    }
-//
-//                }
+                List<RouteTable> routeTables = routeTableList.stream()
+                        .filter(r -> r.vpcId().equals(vpc.getResourceId()) &&
+                                (r.associations().get(0).subnetId() != null) &&
+                                r.associations().get(0).subnetId().equals(subnet.getResourceId()))
+                        .collect(Collectors.toList());
 
+                subnetNode.setRoute_table(new ArrayList<>());
+                if (routeTables.size() >= 1) {
+                    List<Route> routes = routeTables.get(0).routes();
+
+                    for (Route route : routes) {
+                        EntryNode entryNode = EntryNode.builder()
+                                .destination_cidr_block(route.destinationCidrBlock())
+                                .state(String.valueOf(route.state()))
+                                .build();
+
+                        if (entryNode.getDestination_cidr_block() != null && entryNode.getDestination_cidr_block().equals("0.0.0.0/0")) {
+                            if (route.natGatewayId() != null) {
+                                entryNode.setNat_gateway_id(route.natGatewayId());
+                                subnetNode.setType("private");
+                                graph.addLink(new Link(route.natGatewayId(), subnetNode.getId()));
+                            } else if (route.gatewayId() != null && route.gatewayId().startsWith("igw-")) {
+                                entryNode.setGateway_id(route.gatewayId());
+                                subnetNode.setType("public");
+                                graph.addLink(new Link(route.gatewayId(), subnetNode.getId()));
+                            } else if (route.instanceId() != null) {
+                                entryNode.setInstance_id(route.instanceId());
+                                subnetNode.setType("private");
+                                graph.addLink(new Link(route.instanceId(), subnetNode.getId()));
+                            } else if (route.networkInterfaceId() != null) {
+                                entryNode.setNetwork_interface_id(route.networkInterfaceId());
+                                subnetNode.setType("blackhole");
+                            }
+                        } else {
+                            entryNode.setGateway_id(route.gatewayId());
+                        }
+                        subnetNode.addRouteTable(entryNode);
+                    }
+                }
+                else {
+                    subnetNode.setType("empty");
+                }
+                subnetNode.setHref("/img/aws_" + subnetNode.getType() +"_subnet.png");
 
                 List<RdsNode> rdsNodes = rdsList.stream()
                         .filter(r -> r.getVpc_id().equals(vpc.getResourceId())
@@ -299,7 +283,7 @@ public class VisualizationService {
                         .collect(Collectors.toList());
 
                 for (RdsNode rdsNode : rdsNodes) {
-                    rdsNode.setName("rds-" + vpcIdx + "-" + subnetIdx);
+                    rdsNode.setName("rds-" + vpcIdx + "-" + subnetIdx + "-" + rdsNode.getId().split("@")[1]);
                     subnetNode.addChildren(rdsNode);
                 }
 

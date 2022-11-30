@@ -103,15 +103,13 @@ const init = function (graph) {
 
     function get_color(d) {
         const id = d.data.id;
-        return "hsl(0, 0%, 0%)";
-        // if (d === root || d.height === 0) {
-        //     return "hsl(0, 0%, 0%)";
-        // } else if (id.startsWith("subnet")) {
-        //     return color[`${d.data.type}_subnet`];
-        //
-        // } else {
-        //     return color[id.split("-")[0]];
-        // }
+        if (d === root || d.height === 0) {
+             return "hsl(0, 0%, 0%)";
+        } else if (id.startsWith("subnet")) {
+             return color[`${d.data.type}_subnet`];
+        } else {
+             return color[id.split("-")[0]];
+        }
     }
 
     d3.selectAll(".nodeGroup").remove();
@@ -614,7 +612,17 @@ const init = function (graph) {
 
 function render() {
     document.querySelector(".fa-spinner").classList.add("fa-spin");
-    d3.json("/fetch_infra", {
+
+    let queryParams = window.location.search;
+    let queryParam;
+    const url = new URLSearchParams(queryParams);
+    if (!url.has("vpcId")) {
+        queryParam = "all";
+    } else {
+        queryParam = url.get("vpcId");
+    }
+
+    d3.json("/fetch_infra?vpcId=" + queryParam, {
         method: "GET",
         headers: {
             "Content-type": "application/json; charset=UTF-8"
