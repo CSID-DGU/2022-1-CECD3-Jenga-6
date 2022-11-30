@@ -99,8 +99,8 @@ public class VisualizationService {
         List<RouteTable> routeTableList = routeTableService.getRouteTableInstances(ec2Client);
 
         List<RdsNode> rdsList = new ArrayList<>();
+        int rds_idx = 0;
         for (RDS rds : rdsService.getRDSInstances()) {
-            int rds_idx = 0;
             for (software.amazon.awssdk.services.rds.model.Subnet sub : rds.getSubnetGroups()) {
                 RdsNode rdsNode = RdsNode.builder()
                         .id(rds.getResourceId() + '@' + rds_idx)
@@ -283,7 +283,7 @@ public class VisualizationService {
                         .collect(Collectors.toList());
 
                 for (RdsNode rdsNode : rdsNodes) {
-                    rdsNode.setName("rds-" + vpcIdx + "-" + subnetIdx);
+                    rdsNode.setName("rds-" + vpcIdx + "-" + subnetIdx + "-" + rdsNode.getId().split("@")[1]);
                     subnetNode.addChildren(rdsNode);
                 }
 
