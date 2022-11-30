@@ -1,0 +1,118 @@
+<html layout:decorate="~{global/layout}">
+
+<div layout:fragment="content" style="height: 820px;" class="container my-5">
+    <div class="row" style="height: 40%">
+        <div class="col">
+            <div class="card my-1 mx-1" style="height: 90%">
+                <div class="card-body">
+                    <h5 class="card-title">Clouds</h5>
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <td class="font-weight-bold">CLOUD NAME</td>
+                            <td class="font-weight-bold">ID</td>
+                            <td class="font-weight-bold">COSTS</td>
+                            <td class="font-weight-bold">UTILIZATION</td>
+                        </tr>
+                        </thead>
+                        <tbody th:each="vpcCost : ${vpcCostList}">
+                        <tr>
+                            <!--                            <td th:text="${vpcCost.name}"></td>-->
+                            <!--                            <td th:text="${vpcCost.vpcId}"></td>-->
+                            <!--                            <td th:text="${#numbers.formatInteger(vpcCost.cost, 0, 'COMMA')}"></td>-->
+                            <!--                            <td th:text="|${vpcCost.utilization}%|"></td>-->
+                            <td th:text="${vpcCost.date}"></td>
+                            <td th:text="${vpcCost.totalCost}"></td>
+                            <!--                            <td th:text="${#numbers.formatInteger(vpcCost.cost, 0, 'COMMA')}"></td>-->
+                            <td th:text="|${vpcCost.totalUtilization}%|"></td>
+                            <td th:text="|${vpcCost.totalUtilization}%|"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row" style="height: 60%">
+        <div class="col w-100">
+            <div class="card my-1 mx-1" style="height: 100%">
+                <div class="card-body">
+                    <div style="float: left ;display: flex; flex: auto">
+                        <div id="infra"></div>
+                        <div id="infra2"></div>
+                    </div>
+                    <script src="https://d3js.org/d3.v6.min.js"></script>
+                    <script>
+                        const width = 450,
+                            height = 450,
+                            margin = 40;
+
+                        const radius = Math.min(width, height) / 2 - margin
+
+                        const svg = d3.select("#infra")
+                            .append("svg")
+                            .attr("width", width)
+                            .attr("height", height)
+                            .append("g")
+                            .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+                        d3.json("/cost/result2").then(function (data) {
+
+                            const chartData = {};
+                            data.forEach(d => {
+                                d.costDtoList.forEach((dd) => {
+                                    if (dd.regionName in chartData) {
+                                        chartData[dd.regionName] += dd.cost;
+                                    } else {
+                                        chartData[dd.regionName] = dd.cost;
+                                    }
+                                })
+                            })
+
+                            const color = d3.scaleOrdinal()
+                                .range(d3.schemeSet2);
+
+                            const pie = d3.pie()
+                                .value(function (d) {
+                                    return d[1]
+                                })
+                            const data_ready = pie(Object.entries(chartData))
+
+                            const arcGenerator = d3.arc()
+                                .innerRadius(0)
+                                .outerRadius(radius)
+
+                            svg
+                                .selectAll('mySlices')
+                                .data(data_ready)
+                                .join('path')
+                                .attr('d', arcGenerator)
+                                .attr('fill', function (d) {
+                                    return (color(d.data[0]))
+                                })
+                                .attr("stroke", "black")
+                                .style("stroke-width", "2px")
+                                .style("opacity", 0.7)
+
+
+                            const svg2 = d3.select("#infra2")
+                                .append("svg")
+                                .attr("width", width + margin + margin)
+                                .attr("height", 100 + margin + margin)
+                                .append("g")
+                                .attr("transform", `translate(${margin},${margin})`);
+
+                            let i = 0;
+                            for (const key in chartData) {
+                                svg2.append("circle").attr("cx", 0).attr("cy", 10 + i * 20).attr("r", 6).style("fill", color(key))
+                                svg2.append("text").attr("x", 20).attr("y", 10 + i * 20).text(`${key}  :  ${Math.ceil(chartData[key] * 100) / 100}$`).style("font-size", "15px").attr("alignment-baseline", "middle")
+                                i += 1
+                            }
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</html>
