@@ -612,7 +612,17 @@ const init = function (graph) {
 
 function render() {
     document.querySelector(".fa-spinner").classList.add("fa-spin");
-    d3.json("/fetch_infra", {
+
+    let queryParams = window.location.search;
+    let queryParam;
+    const url = new URLSearchParams(queryParams);
+    if (!url.has("vpcId")) {
+        queryParam = "all";
+    } else {
+        queryParam = url.get("vpcId");
+    }
+
+    d3.json("/fetch_infra?vpcId=" + queryParam, {
         method: "GET",
         headers: {
             "Content-type": "application/json; charset=UTF-8"

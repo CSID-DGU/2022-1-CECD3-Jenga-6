@@ -1,6 +1,5 @@
 package com.jenga.weather.web.infravisualization.service;
 
-import com.jenga.weather.domain.base.AWSEntity;
 import com.jenga.weather.domain.ec2.model.EC2;
 import com.jenga.weather.domain.ec2.service.EC2Service;
 import com.jenga.weather.domain.elb.model.ELB;
@@ -18,6 +17,7 @@ import com.jenga.weather.domain.subnet.model.Subnet;
 import com.jenga.weather.domain.subnet.service.SubnetService;
 import com.jenga.weather.domain.vpc.model.VPC;
 import com.jenga.weather.domain.vpc.service.VPCService;
+import com.jenga.weather.web.infravisualization.dto.VpcDto;
 import com.jenga.weather.web.infravisualization.node.Graph;
 import com.jenga.weather.web.infravisualization.node.LeafNode;
 import com.jenga.weather.web.infravisualization.node.Link;
@@ -40,7 +40,6 @@ import software.amazon.awssdk.services.ec2.model.Route;
 import software.amazon.awssdk.services.ec2.model.RouteTable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -58,86 +57,27 @@ public class VisualizationService {
     private final VPCService vpcService;
     private final RouteTableService routeTableService;
 
-    public String mapInfra() {
+    public List<VpcDto> getVpcs() {
+
         Ec2Client ec2Client = Ec2Client.builder()
                 .region(Region.AP_NORTHEAST_2)
                 .credentialsProvider(ProfileCredentialsProvider.create())
                 .build();
 
-        // Infra Resource 목록 조회
-        List<EC2> ec2List = ec2Service.getEC2Instances(ec2Client);
-        List<ELB> elbList = elbService.getELBInstances();
-        List<IGW> igwList = igwService.getIGWInstances(ec2Client);
-        List<NAT> natList = natService.getNATInstances(ec2Client);
-        List<RDS> rdsList = rdsService.getRDSInstances();
-        List<S3> s3List = s3Service.getS3Instances();
-        List<Subnet> subnetList = subnetService.getSubnetInstances(ec2Client);
-        List<VPC> vpcList = vpcService.getVPCInstances(ec2Client);
+        List<VpcDto> vpcDtoList = new ArrayList<>();
 
-        // Subnet 별 매핑
-        HashMap<Subnet, List<AWSEntity>> subnetMapping = new HashMap<>();
-        subnetList.forEach(subnet -> {
-            List<AWSEntity> entities = new ArrayList<>();
-            ec2List.forEach(vv -> {
-                if (vv.getSubnetId().equals(subnet.getResourceId()))
-                    entities.add(vv);
-            });
-            natList.forEach(vv -> {
-                if (vv.getSubnetId().equals(subnet.getResourceId()))
-                    entities.add(vv);
-            });
-            rdsList.forEach(vv -> {
-                if (vv.getSubnetId().equals(subnet.getResourceId()))
-                    entities.add(vv);
-            });
-            subnetMapping.put(subnet, entities);
-        });
+        for (VPC vpc : vpcService.getVPCInstances(ec2Client)) {
+            VpcDto vpcDto = VpcDto.builder()
+                    .vpcId(vpc.getResourceId())
+                    .name(vpc.getResourceName())
+                    .build();
+            vpcDtoList.add(vpcDto);
+        }
 
-        // VPC 별 매핑
-        HashMap<VPC, List<Subnet>> vpcMapping = new HashMap<>();
-        vpcList.forEach(v -> {
-            List<Subnet> subnets = new ArrayList<>();
-            subnetMapping.forEach((k, vv) -> {
-                if (v.getResourceId().equals(k.getVpcId())) {
-                    subnets.add(k);
-                }
-                vpcMapping.put(v, subnets);
-            });
-        });
-
-        // Infra 관계 생성
-        StringBuffer result = new StringBuffer();
-        result.append("VPC-Subnet 별 Resource\n");
-        result.append("--------------------------------------------------\n");
-        vpcMapping.forEach((vpc, subnets) -> {
-            result.append("VPC : ").append(vpc).append("\n");
-            subnets.forEach(subnet -> {
-                result.append("    |Subnet : ").append(subnet).append("\n");
-                subnetMapping.get(subnet).forEach(entity ->
-                        result.append("        |").append(entity.toString()).append("\n")
-                );
-                elbList.forEach(entity -> {
-                    if (entity.getVpcId().equals(vpc.getResourceId()))
-                        result.append("    |").append(entity).append("\n");
-                });
-                igwList.forEach(entity -> {
-                    if (entity.getVpcId().equals(vpc.getResourceId()))
-                        result.append("        |").append(entity).append("\n");
-                });
-                result.append("\n");
-            });
-            result.append("\n");
-            System.out.println();
-        });
-        result.append("S3-------------------------------------------------\n");
-        s3List.forEach(entity ->
-                result.append(entity.toString()).append("\n")
-        );
-
-        return result.toString();
+        return vpcDtoList;
     }
 
-    public Graph getData() {
+    public Graph getInstances(String vpcId) {
         int subnetIdx = 0;
         int ec2Idx = 0;
         int natIdx = 0;
@@ -198,7 +138,19 @@ public class VisualizationService {
 
         int vpcIdx = 0;
         int igwIdx = 0;
-        for (VPC vpc : vpcService.getVPCInstances(ec2Client)) {
+
+        List<VPC> vpcs;
+
+        if (vpcId.equals("all")) {
+            vpcs = vpcService.getVPCInstances(ec2Client);
+        } else {
+            vpcs = vpcService.getVPCInstances(ec2Client)
+                    .stream()
+                    .filter(vpc -> vpc.getResourceId().equals(vpcId))
+                    .collect(Collectors.toList());
+        }
+
+        for (VPC vpc : vpcs) {
             VpcNode vpcNode = VpcNode.builder()
                     .id(vpc.getResourceId())
                     .name("vpc-" + vpcIdx)

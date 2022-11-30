@@ -13,10 +13,10 @@
                             <th scope="col">ID</th>
                         </tr>
                         </thead>
-                        <tbody th:each="vpc : ${vpcList}">
+                        <tbody th:each="vpc : ${vpcs}">
                             <tr>
-                                <td th:text="${vpc.name}"></td>
-                                <td th:text="${vpc.vpcId}"></td>
+                                <td><a th:text="${vpc.name}" th:href="@{|/infra/visualization?vpcId=${vpc.vpcId}|}"></a></td>
+                                <td><a th:text="${vpc.vpcId}" th:href="@{|/infra/visualization?vpcId=${vpc.vpcId}|}"></a></td>
                             </tr>
                         </tbody>
                     </table>
