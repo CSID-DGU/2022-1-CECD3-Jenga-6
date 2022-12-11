@@ -17,10 +17,15 @@
                         </thead>
                         <tbody th:each="vpcCost : ${vpcCostList}">
                         <tr>
-                            <td th:text="${vpcCost.name}"></td>
-                            <td th:text="${vpcCost.vpcId}"></td>
-                            <td th:text="${#numbers.formatInteger(vpcCost.cost, 0, 'COMMA')}"></td>
-                            <td th:text="|${vpcCost.utilization}%|"></td>
+                            <!--                            <td th:text="${vpcCost.name}"></td>-->
+                            <!--                            <td th:text="${vpcCost.vpcId}"></td>-->
+                            <!--                            <td th:text="${#numbers.formatInteger(vpcCost.cost, 0, 'COMMA')}"></td>-->
+                            <!--                            <td th:text="|${vpcCost.utilization}%|"></td>-->
+                            <td th:text="${vpcCost.date}"></td>
+                            <td th:text="${vpcCost.totalCost}"></td>
+                            <!--                            <td th:text="${#numbers.formatInteger(vpcCost.cost, 0, 'COMMA')}"></td>-->
+                            <td th:text="|${vpcCost.totalUtilization}%|"></td>
+                            <td th:text="|${vpcCost.totalUtilization}%|"></td>
                         </tr>
                         </tbody>
                     </table>
@@ -32,6 +37,9 @@
         <div class="col w-100">
             <div class="card my-1 mx-1" style="height: 100%">
                 <div class="card-body">
+                    <button>
+                        <a th:href="@{/cost/visualization/region}">리전별</a>
+                    </button>
                     <div id="infra"></div>
                     <script src="https://d3js.org/d3.v6.min.js"></script>
                     <script>
@@ -119,6 +127,7 @@
                                 .data(stackedData)
                                 .join("g")
                                 .attr("fill", d => color(d.key))
+
                                 .selectAll("rect")
                                 .data(d => d)
                                 .join("rect")
@@ -144,6 +153,7 @@
                         svg2.append("circle").attr("cx", 300).attr("cy", 30).attr("r", 6).style("fill", "#F7DC42")
                         svg2.append("circle").attr("cx", 0).attr("cy", 50).attr("r", 6).style("fill", "#963054")
                         svg2.append("circle").attr("cx", 180).attr("cy", 50).attr("r", 6).style("fill", "#6CC75E")
+
                         svg2.append("text").attr("x", 20).attr("y", 10).text("EC2 - Other").style("font-size", "15px").attr("alignment-baseline", "middle")
                         svg2.append("text").attr("x", 140).attr("y", 10).text("Amazon Elastic Compute Cloud - Compute").style("font-size", "15px").attr("alignment-baseline", "middle")
                         svg2.append("text").attr("x", 20).attr("y", 30).text("Amazon Relational Database Service").style("font-size", "15px").attr("alignment-baseline", "middle")
